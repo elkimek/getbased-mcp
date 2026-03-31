@@ -13,14 +13,16 @@ TOKEN = os.environ.get("GETBASED_TOKEN", "")
 GATEWAY = os.environ.get("GETBASED_GATEWAY", "https://sync.getbased.health")
 
 
-async def _fetch_context() -> dict:
+async def _fetch_context(profile: str = "") -> dict:
     if not TOKEN:
         return {"error": "GETBASED_TOKEN not set"}
     try:
+        params = {"profile": profile} if profile else {}
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.get(
                 f"{GATEWAY}/api/context",
                 headers={"Authorization": f"Bearer {TOKEN}"},
+                params=params,
             )
             r.raise_for_status()
             return r.json()
@@ -44,14 +46,17 @@ def _parse_sections(context: str) -> dict[str, str]:
 
 
 @mcp.tool()
-async def getbased_lab_context() -> str:
+async def getbased_lab_context(profile: str = "") -> str:
     """Get a full summary of the user's blood work data, health context,
     supplements, and goals from getbased. Use when the user asks broad
-    questions about their labs, biomarkers, or health trends."""
-    data = await _fetch_context()
+    questions about their labs, biomarkers, or health trends.
+    Pass a profile ID to query a specific profile, or omit for the default."""
+    data = await _fetch_context(profile)
     if "error" in data:
         return f"Error: {data['error']}"
     parts = []
+    if data.get("profileId"):
+        parts.append(f"Profile: {data['profileId']}")
     if data.get("updatedAt"):
         parts.append(f"Updated: {data['updatedAt']}")
     parts.append(data.get("context", "No context available"))
@@ -59,14 +64,15 @@ async def getbased_lab_context() -> str:
 
 
 @mcp.tool()
-async def getbased_section(section: str = "") -> str:
+async def getbased_section(section: str = "", profile: str = "") -> str:
     """Get a specific section of health data, or list all available sections.
     Call with no section name to get the index (section names + line counts).
     Call with a section name to get just that section's content.
     Sections include: biometrics, hormones, lipids, hematology, biochemistry,
     supplements, goals, genetics, context cards, etc.
-    Section names are matched by prefix."""
-    data = await _fetch_context()
+    Section names are matched by prefix.
+    Pass a profile ID to query a specific profile, or omit for the default."""
+    data = await _fetch_context(profile)
     if "error" in data:
         return f"Error: {data['error']}"
     context = data.get("context", "")
