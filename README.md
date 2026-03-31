@@ -24,9 +24,11 @@ Your mnemonic never leaves your browser. The MCP server receives the same lab co
 
 | Tool | Description |
 |---|---|
-| `getbased_lab_context` | Full lab summary with biomarkers, context cards, supplements, goals |
+| `getbased_lab_context` | Full lab summary with biomarkers, context cards, supplements, goals. Pass `profile` to target a specific profile. |
 | `getbased_section` | Get a specific section (e.g. hormones, lipids) or list all available sections |
 | `getbased_list_profiles` | List available profiles |
+
+All tools accept an optional `profile` parameter to query a specific profile (see [Multi-profile](#multi-profile) below).
 
 ### getbased_section
 
@@ -38,9 +40,21 @@ getbased_section()
 
 # With section name — returns just that section's content
 getbased_section(section="hormones")
+
+# With profile — query a specific profile
+getbased_section(section="hormones", profile="mne8m9hf")
 ```
 
 Section names are matched by prefix, so `hormones` matches `hormones updated:2026-03-13`.
+
+## Multi-profile
+
+The gateway stores context per profile ID. To work with multiple profiles:
+
+- Use `getbased_list_profiles` to see available profiles and their IDs
+- Pass `profile="id"` to any tool to query a specific profile
+- Omit the `profile` param to use the default profile
+- Each profile's context is pushed automatically when data is saved or the profile is switched in getbased
 
 ## Setup
 
