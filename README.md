@@ -62,7 +62,7 @@ Search the curated health knowledge base using semantic similarity. Returns pass
 knowledge_search(query="blue light DHA mitochondrial damage")
 
 # With result count
-knowledge_search(query="MTHFR methylation folate", n_results=12)
+knowledge_search(query="MTHFR methylation folate", n_results=8)
 
 # With series filter (when supported by Lens)
 knowledge_search(query="circadian melatonin", series="Decentralized Medicine")
@@ -148,9 +148,40 @@ Ask about your labs in any connected conversation:
 |---|---|---|
 | `GETBASED_TOKEN` | Yes | Read-only token from getbased Settings > Data > Messenger Access |
 | `GETBASED_GATEWAY` | No | Context gateway URL (default: `https://sync.getbased.health`) |
-| `LENS_URL` | No | Lens RAG server URL (default: `http://localhost:8321`) |
-| `LENS_PORT` | No | Lens server port, used to build default LENS_URL (default: `8321`) |
+| `LENS_URL` | No | Lens RAG server URL (default: `http://localhost:8321`). Overrides `LENS_PORT` |
+| `LENS_PORT` | No | Lens server port, only used to build default `LENS_URL` (default: `8321`) |
 | `LENS_API_KEY_FILE` | No | Path to Lens API key file (default: `~/.hermes/rag/lens_api_key`) |
+
+## Custom Knowledge Source (getbased app)
+
+The same Lens server that powers `knowledge_search` for your AI client can also back the in-app AI chat. To connect them:
+
+1. Run `getbased_lens_config` — it returns the endpoint URL, API key, and recommended `top_k`
+2. In getbased, go to **Settings → AI → Custom Knowledge Source**
+3. Paste the endpoint URL, API key, and set `top_k` to 5
+4. Enable it — the chat-header Lens badge will light up green when active
+
+Every chat question and focus card will now be enriched with RAG-retrieved knowledge from your corpus.
+
+## Troubleshooting
+
+### `knowledge_search` returns "Lens server not reachable"
+
+The Lens server isn't running. Start it:
+
+```bash
+python3 /path/to/kruse-corpus/lens_server.py
+```
+
+Check it's up: `curl http://localhost:8321/health`
+
+### `knowledge_search` returns "Lens API key not found"
+
+The Lens server generates its API key on first start and writes it to `~/.hermes/rag/lens_api_key`. If the key file is missing, restart the Lens server — it will create a new one.
+
+### Blood work tools work but knowledge_search doesn't
+
+That's expected — they're independent. Blood work tools talk to the sync gateway; knowledge_search talks to the Lens server. The MCP degrades gracefully: if the Lens server is down, all blood work tools continue to work.
 
 ## Security
 
