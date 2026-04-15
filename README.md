@@ -64,7 +64,7 @@ The `knowledge_search` tool searches your knowledge base using semantic similari
 knowledge_search(query="blue light DHA mitochondrial damage")
 
 # With result count (1–10, default 5)
-knowledge_search(query="MTHFR methylation folate", n_results=8)
+knowledge_search(query="MTHFR methylation folate", n_results=5)
 ```
 
 **Note:** This tool requires the RAG server to be running. Without it, all blood work tools still work — the MCP degrades gracefully.

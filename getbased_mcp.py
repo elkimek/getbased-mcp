@@ -72,7 +72,7 @@ def _read_lens_key() -> str:
         with open(LENS_API_KEY_FILE) as f:
             key = f.read().strip()
         return key if key else ""
-    except (FileNotFoundError, PermissionError, OSError):
+    except OSError:
         return ""
 
 
@@ -186,7 +186,7 @@ async def getbased_list_profiles() -> str:
 @mcp.tool()
 async def knowledge_search(
     query: str,
-    n_results: int = 8,
+    n_results: int = 5,
     series: str = "",
     claim_type: str = "",
 ) -> str:
@@ -198,9 +198,13 @@ async def knowledge_search(
 
     Args:
         query: Natural language search query (e.g. "folic acid MTHFR methylation")
-        n_results: Number of results to return (default 8, max 10)
-        series: Filter to a specific series (e.g. "Decentralized Medicine", "CPC")
-        claim_type: Filter to claim type: mechanism, causal, prescriptive, speculative, general
+        n_results: Number of results to return (default 5, max 10)
+        series: Filter to a specific series (e.g. "Decentralized Medicine", "CPC").
+            Currently no-op — placeholder for future Lens metadata filtering.
+            Filter client-side from results if needed.
+        claim_type: Filter to claim type: mechanism, causal, prescriptive, speculative, general.
+            Currently no-op — placeholder for future Lens metadata filtering.
+            Filter client-side from results if needed.
     """
     n_results = max(1, min(10, n_results))
 
@@ -232,7 +236,9 @@ async def knowledge_search(
 async def getbased_lens_config() -> str:
     """Get the Lens RAG endpoint configuration for getbased's Custom Knowledge Source.
     Returns the URL, API key, and recommended top_k to paste into
-    Settings → AI → Custom Knowledge Source in getbased."""
+    Settings → AI → Custom Knowledge Source in getbased.
+
+    Note: Treat the response as sensitive — it contains the API key in plaintext."""
     key = _read_lens_key()
     if not key:
         return (
