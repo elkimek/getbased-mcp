@@ -82,17 +82,21 @@ async def _lens_request(query: str, top_k: int = 5) -> dict:
     if not key:
         return {"error": "Lens API key not found. Start lens_server.py first."}
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=60) as client:
             r = await client.post(
                 f"{LENS_URL}/query",
                 headers={"Authorization": f"Bearer {key}"},
                 json={"version": 1, "query": query, "top_k": top_k},
             )
             r.raise_for_status()
+            if len(r.content) > 32 * 1024:
+                return {"error": "Lens response exceeds 32 KB — possible server issue"}
             return r.json()
     except httpx.ConnectError:
         return {"error": f"Lens server not reachable at {LENS_URL}. Is it running?"}
     except httpx.HTTPStatusError as e:
+        # Note: response text may contain server-side details (stack traces, DB errors)
+        # Acceptable for self-hosted trust model — operator owns both ends
         return {"error": f"Lens returned {e.response.status_code}: {e.response.text}"}
     except httpx.RequestError as e:
         return {"error": f"Lens request failed: {e}"}
@@ -217,14 +221,14 @@ async def knowledge_search(
     if "error" in data:
         return f"Knowledge search error: {data['error']}"
 
-    chunks = data.get("chunks", [])
+    chunks = data.get("chunks", [])[:10]  # mirror web-app MAX_CHUNKS
     if not chunks:
         return "No results found for that query."
 
     output_lines = []
     for i, chunk in enumerate(chunks):
-        text = chunk.get("text", "")
-        source = chunk.get("source", "")
+        text = (chunk.get("text") or "")[:4000]
+        source = (chunk.get("source") or "")[:200]
         output_lines.append(f"[{i + 1}] {source}")
         output_lines.append(text)
         output_lines.append("")
